@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 use App\Models\Task;
+
+
+
 
 class TasksController extends Controller
 {
@@ -14,11 +17,22 @@ class TasksController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {
-         $tasks = Task::all();
+    {   
+        $tasks = Task::all();
+
+        if (\Auth::check()) { 
+            $user = \Auth::id();
+            $tasks = Task::where('user_id', '=', $user)
+        ->get();
+        }
+        
+        // dashboardビューでそれらを表示
+        
          return view('tasks.index', [    
             'tasks' => $tasks,        
         ]);
+        
+        
         
     }
 
@@ -45,13 +59,15 @@ class TasksController extends Controller
      */
     public function store(Request $request)
     {   
-        
+        // var_dump($request);
+        // exit;
         $request->validate([
             'status' => 'required|max:10',
             'content' => 'required|max:255',
         ]);
         
         $task = new Task;
+        $task->user_id = Auth::id();
         $task->status = $request->status;  
         $task->content = $request->content;
         $task->save();
