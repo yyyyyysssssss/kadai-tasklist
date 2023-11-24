@@ -74,6 +74,7 @@ class TasksController extends Controller
 
        
         return redirect('/');
+        // return back();
     }
 
     /**
@@ -85,10 +86,12 @@ class TasksController extends Controller
     public function show($id)
     {
         $task = Task::findOrFail($id);
-
+        if (\Auth::id() === $task->user_id) {
         return view('tasks.show', [
             'task' => $task,
         ]);
+        }
+        return redirect('/');
     }
 
     /**
@@ -99,11 +102,13 @@ class TasksController extends Controller
      */
     public function edit($id)
     {
-        $task = Task::findOrFail($id);
-
+         $task = Task::findOrFail($id);
+        if (\Auth::id() === $task->user_id) {
         return view('tasks.edit', [
             'task' => $task,
         ]);
+        }
+        return redirect('/');
     }
 
     /**
@@ -138,11 +143,18 @@ class TasksController extends Controller
      */
     public function destroy($id)
     {
-        $task = Task::findOrFail($id);
+        // idの値で投稿を検索して取得
+        $task = \App\Models\Task::findOrFail($id);
         
-        $task->delete();
+        // 認証済みユーザ（閲覧者）がその投稿の所有者である場合は投稿を削除
+        if (\Auth::id() === $task->user_id) {
+            $task->delete();
+            return back()
+                ->with('success','Delete Successful');
+        }
 
-        // トップページへリダイレクトさせる
-        return redirect('/');
+        // 前のURLへリダイレクトさせる
+        return back()
+            ->with('Delete Failed');
     }
 }
